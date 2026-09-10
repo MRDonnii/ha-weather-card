@@ -1,4 +1,4 @@
-const VERSION = "0.3.0";
+const VERSION = "0.3.1";
 
 const CONDITION_LABEL_DA = {
   "clear-night": "Klar nat",
@@ -127,63 +127,17 @@ class HAWeatherCard extends HTMLElement {
     }
   }
 
-  _stopMomentum(state) {
-    if (state.momentumFrame) cancelAnimationFrame(state.momentumFrame);
-    state.momentumFrame = null;
-  }
-  _startMomentum(el, state, velocity) {
-    this._stopMomentum(state);
-    let speed = velocity * 16;
-    const glide = () => {
-      if (Math.abs(speed) < 0.08) {
-        state.momentumFrame = null;
-        return;
-      }
-      el.scrollLeft += speed;
-      speed *= 0.93;
-      state.momentumFrame = requestAnimationFrame(glide);
-    };
-    state.momentumFrame = requestAnimationFrame(glide);
-  }
-  _makeDraggable(el) {
+  _shieldFromSwipeNav(el) {
     if (!el) return;
-    const state = { drag: null, momentumFrame: null };
+    // Keep native scrolling in both axes (horizontal scrolls this row,
+    // vertical bubbles up to scroll the page, exactly as the browser
+    // already does by default). We only stop the touch/pointer events
+    // from bubbling further up, so the dashboard's global swipe-navigation
+    // listener never sees them and can't turn a horizontal drag here into
+    // a page change. No preventDefault anywhere, so nothing is taken over.
     const stop = (event) => event.stopPropagation();
-    ["click", "dblclick", "touchstart", "touchmove", "touchend"].forEach((type) => el.addEventListener(type, stop, { passive: true }));
-    el.addEventListener("pointerdown", (event) => {
-      event.stopPropagation();
-      this._stopMomentum(state);
-      state.drag = { x: event.clientX, lastX: event.clientX, lastTime: performance.now(), left: el.scrollLeft, velocity: 0 };
-      el.classList.add("dragging");
-      el.setPointerCapture?.(event.pointerId);
-    });
-    el.addEventListener("pointermove", (event) => {
-      if (!state.drag) return;
-      event.stopPropagation();
-      event.preventDefault();
-      el.scrollLeft = state.drag.left - (event.clientX - state.drag.x);
-      const now = performance.now();
-      const elapsed = Math.max(1, now - state.drag.lastTime);
-      state.drag.velocity = (state.drag.lastX - event.clientX) / elapsed;
-      state.drag.lastX = event.clientX;
-      state.drag.lastTime = now;
-    });
-    const endDrag = (event) => {
-      event.stopPropagation();
-      const velocity = state.drag?.velocity || 0;
-      state.drag = null;
-      el.classList.remove("dragging");
-      this._startMomentum(el, state, velocity);
-    };
-    el.addEventListener("pointerup", endDrag);
-    el.addEventListener("pointercancel", endDrag);
-    el.addEventListener(
-      "wheel",
-      (event) => {
-        event.stopPropagation();
-        if (Math.abs(event.deltaY) > Math.abs(event.deltaX)) el.scrollLeft += event.deltaY;
-      },
-      { passive: true },
+    ["touchstart", "touchmove", "touchend", "pointerdown", "pointermove", "pointerup"].forEach((type) =>
+      el.addEventListener(type, stop, { passive: true }),
     );
   }
 
@@ -469,8 +423,7 @@ class HAWeatherCard extends HTMLElement {
       .meta-item ha-icon{--mdc-icon-size:15px}
       .meta-item b{color:var(--primary-text-color);font-weight:800}
       .wind-arrow{width:14px;height:14px;fill:var(--accent);transition:transform .4s ease}
-      .hourly-scroll{display:flex;gap:6px;overflow-x:auto;margin-top:18px;padding-bottom:6px;scroll-snap-type:x proximity;touch-action:none;cursor:grab;user-select:none;-webkit-user-select:none}
-      .hourly-scroll.dragging{cursor:grabbing}
+      .hourly-scroll{display:flex;gap:6px;overflow-x:auto;margin-top:18px;padding-bottom:6px;scroll-snap-type:x proximity}
       .hourly-scroll::-webkit-scrollbar{height:4px}
       .hourly-scroll::-webkit-scrollbar-thumb{background:var(--edge);border-radius:4px}
       .hour{flex:0 0 auto;width:52px;display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 4px;border-radius:14px;background:color-mix(in srgb,var(--primary-text-color) 4%,transparent);scroll-snap-align:start}
@@ -497,8 +450,7 @@ class HAWeatherCard extends HTMLElement {
       .radar-frame iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
       .forecast-section{margin-top:20px;padding-top:16px;border-top:1px solid var(--edge)}
       .forecast-title{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--secondary-text-color);margin-bottom:10px}
-      .forecast-row{display:flex;gap:8px;overflow-x:auto;padding-bottom:6px;scroll-snap-type:x proximity;touch-action:none;cursor:grab;user-select:none;-webkit-user-select:none}
-      .forecast-row.dragging{cursor:grabbing}
+      .forecast-row{display:flex;gap:8px;overflow-x:auto;padding-bottom:6px;scroll-snap-type:x proximity}
       .forecast-row::-webkit-scrollbar{height:4px}
       .forecast-row::-webkit-scrollbar-thumb{background:var(--edge);border-radius:4px}
       .fday{flex:0 0 auto;width:96px;display:flex;flex-direction:column;align-items:center;gap:3px;padding:12px 6px;border:1px solid var(--edge);border-radius:14px;cursor:pointer;text-align:center;scroll-snap-align:start}
@@ -545,8 +497,8 @@ class HAWeatherCard extends HTMLElement {
     this.shadowRoot.querySelectorAll("[data-more]").forEach((el) =>
       el.addEventListener("click", () => this._more(el.dataset.more)),
     );
-    this._makeDraggable(this.shadowRoot.querySelector(".hourly-scroll"));
-    this._makeDraggable(this.shadowRoot.querySelector(".forecast-row"));
+    this._shieldFromSwipeNav(this.shadowRoot.querySelector(".hourly-scroll"));
+    this._shieldFromSwipeNav(this.shadowRoot.querySelector(".forecast-row"));
   }
 
   getCardSize() {
