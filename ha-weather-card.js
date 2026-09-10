@@ -1,4 +1,4 @@
-const VERSION = "0.1.0";
+const VERSION = "0.2.0";
 
 const CONDITION_LABEL_DA = {
   "clear-night": "Klar nat",
@@ -32,7 +32,6 @@ class HAWeatherCard extends HTMLElement {
     this._hass = undefined;
     this._sig = "";
     this._heroMode = "now";
-    this._tab = "vejr";
     this._radarTab = "nedbor";
     this._daily = [];
     this._hourly = [];
@@ -360,7 +359,7 @@ class HAWeatherCard extends HTMLElement {
   }
 
   _forecastHtml() {
-    const days = (this._daily || []).slice(1, 6);
+    const days = (this._daily || []).slice(1);
     if (!days.length) return `<div class="forecast-empty">Henter prognose…</div>`;
     return `<div class="forecast-row">${days
       .map(
@@ -375,21 +374,14 @@ class HAWeatherCard extends HTMLElement {
       .join("")}</div>`;
   }
 
+  _sectionHeading(icon, title) {
+    return `<div class="section-heading"><ha-icon icon="${icon}"></ha-icon><span>${this._esc(title)}</span></div>`;
+  }
+
   _render() {
     if (!this.shadowRoot) return;
     const c = this._config;
     if (!c.weather_entity) return;
-    const tabs = [
-      ["vejr", "Vejr", "mdi:weather-partly-cloudy"],
-      ["pollen", "Pollen", "mdi:flower-pollen"],
-      ["sol", "Sol & UV", "mdi:white-balance-sunny"],
-      ["radar", "Radar", "mdi:radar"],
-    ];
-    let mainHtml = "";
-    if (this._tab === "vejr") mainHtml = `${this._heroHtml()}${this._hourlyHtml()}`;
-    else if (this._tab === "pollen") mainHtml = this._pollenHtml();
-    else if (this._tab === "sol") mainHtml = this._sunHtml();
-    else if (this._tab === "radar") mainHtml = this._radarHtml();
 
     this.shadowRoot.innerHTML = `<style>
       :host{display:block;--good:var(--dashboard-success, var(--success-color, #20e3a2));--warn:var(--dashboard-warning, var(--warning-color, #f59e0b));--danger:var(--dashboard-danger, var(--error-color, #ef4444));--accent:var(--dashboard-accent, var(--info-color, #38bdf8));--edge:var(--dashboard-border-neutral, var(--divider-color, rgba(127,145,165,.2)));--muted:var(--dashboard-icon-muted, var(--disabled-text-color, #64748b))}
@@ -399,10 +391,9 @@ class HAWeatherCard extends HTMLElement {
       .head ha-icon{--mdc-icon-size:26px;color:var(--accent)}
       .head strong{display:block;font-size:16px}
       .head span{display:block;color:var(--secondary-text-color);font-size:12px;margin-top:2px}
-      .tabs{display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap}
-      .tab{display:flex;align-items:center;gap:6px;padding:8px 14px;border-radius:999px;border:1px solid var(--edge);background:transparent;color:var(--secondary-text-color);font-size:12px;font-weight:700;cursor:pointer}
-      .tab ha-icon{--mdc-icon-size:16px}
-      .tab.active{color:var(--primary-text-color);background:color-mix(in srgb,var(--accent) 16%,transparent);border-color:color-mix(in srgb,var(--accent) 45%,var(--edge))}
+      .section-heading{display:flex;align-items:center;gap:8px;margin:26px 0 12px;color:var(--secondary-text-color);font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.05em}
+      .section-heading:first-child{margin-top:0}
+      .section-heading ha-icon{--mdc-icon-size:16px;color:var(--accent)}
       .hero-toggle{display:flex;gap:6px;margin-bottom:14px}
       .pill{padding:6px 14px;border-radius:999px;border:1px solid var(--edge);background:transparent;color:var(--secondary-text-color);font-size:11px;font-weight:800;cursor:pointer;text-transform:uppercase;letter-spacing:.04em}
       .pill.active{color:#fff;background:var(--accent);border-color:var(--accent)}
@@ -418,7 +409,7 @@ class HAWeatherCard extends HTMLElement {
       .meta-item ha-icon{--mdc-icon-size:15px}
       .meta-item b{color:var(--primary-text-color);font-weight:800}
       .wind-arrow{width:14px;height:14px;fill:var(--accent);transition:transform .4s ease}
-      .hourly-scroll{display:flex;gap:6px;overflow-x:auto;margin-top:18px;padding-bottom:6px;scroll-snap-type:x proximity}
+      .hourly-scroll{display:flex;gap:6px;overflow-x:auto;margin-top:18px;padding-bottom:6px;scroll-snap-type:x proximity;touch-action:pan-x}
       .hourly-scroll::-webkit-scrollbar{height:4px}
       .hourly-scroll::-webkit-scrollbar-thumb{background:var(--edge);border-radius:4px}
       .hour{flex:0 0 auto;width:52px;display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 4px;border-radius:14px;background:color-mix(in srgb,var(--primary-text-color) 4%,transparent);scroll-snap-align:start}
@@ -445,36 +436,38 @@ class HAWeatherCard extends HTMLElement {
       .radar-frame iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
       .forecast-section{margin-top:20px;padding-top:16px;border-top:1px solid var(--edge)}
       .forecast-title{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--secondary-text-color);margin-bottom:10px}
-      .forecast-row{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
-      .fday{display:flex;flex-direction:column;align-items:center;gap:3px;padding:12px 6px;border:1px solid var(--edge);border-radius:14px;cursor:pointer;text-align:center}
+      .forecast-row{display:flex;gap:8px;overflow-x:auto;padding-bottom:6px;scroll-snap-type:x proximity;touch-action:pan-x}
+      .forecast-row::-webkit-scrollbar{height:4px}
+      .forecast-row::-webkit-scrollbar-thumb{background:var(--edge);border-radius:4px}
+      .fday{flex:0 0 auto;width:96px;display:flex;flex-direction:column;align-items:center;gap:3px;padding:12px 6px;border:1px solid var(--edge);border-radius:14px;cursor:pointer;text-align:center;scroll-snap-align:start}
       .fday-name{font-size:11px;font-weight:800;text-transform:capitalize}
       .fday-temp{font-size:13px;font-weight:800}
       .fday-temp small{color:var(--secondary-text-color);font-weight:700;margin-left:4px}
       .fday-cond{font-size:10px;color:var(--secondary-text-color);min-height:24px}
       .fday-precip{font-size:10px;color:var(--accent);font-weight:700}
-      @media(max-width:560px){.hero-body{flex-direction:column;align-items:flex-start}.hero-icon{width:84px;height:84px}.hero-temp{font-size:34px}.grid2{grid-template-columns:1fr}.forecast-row{grid-template-columns:repeat(3,1fr)}.fday:nth-child(n+4){display:none}}
+      @media(max-width:560px){.hero-body{flex-direction:column;align-items:flex-start}.hero-icon{width:84px;height:84px}.hero-temp{font-size:34px}.grid2{grid-template-columns:1fr}}
     </style>
     <ha-card>
       <div class="head">
         <ha-icon icon="mdi:weather-partly-cloudy"></ha-icon>
         <div><strong>${this._esc(c.title)}</strong><span>${this._esc(c.subtitle)}</span></div>
       </div>
-      <div class="tabs">${tabs
-        .map((t) => `<button class="tab ${this._tab === t[0] ? "active" : ""}" data-tab="${t[0]}"><ha-icon icon="${t[2]}"></ha-icon>${t[1]}</button>`)
-        .join("")}</div>
-      <div class="main">${mainHtml}</div>
+      <div class="main">
+        ${this._heroHtml()}
+        ${this._hourlyHtml()}
+        ${this._sectionHeading("mdi:flower-pollen", "Pollen")}
+        ${this._pollenHtml()}
+        ${this._sectionHeading("mdi:white-balance-sunny", "Sol & UV")}
+        ${this._sunHtml()}
+        ${this._sectionHeading("mdi:radar", "Radar")}
+        ${this._radarHtml()}
+      </div>
       <div class="forecast-section">
         <div class="forecast-title">Prognose &middot; de næste dage</div>
         ${this._forecastHtml()}
       </div>
     </ha-card>`;
 
-    this.shadowRoot.querySelectorAll("[data-tab]").forEach((el) =>
-      el.addEventListener("click", () => {
-        this._tab = el.dataset.tab;
-        this._render();
-      }),
-    );
     this.shadowRoot.querySelectorAll("[data-hero]").forEach((el) =>
       el.addEventListener("click", () => {
         this._heroMode = el.dataset.hero;
@@ -493,7 +486,7 @@ class HAWeatherCard extends HTMLElement {
   }
 
   getCardSize() {
-    return 22;
+    return 34;
   }
 }
 
