@@ -1,4 +1,4 @@
-const VERSION = "0.2.0";
+const VERSION = "0.2.1";
 
 const CONDITION_LABEL_DA = {
   "clear-night": "Klar nat",
@@ -455,16 +455,16 @@ class HAWeatherCard extends HTMLElement {
       <div class="main">
         ${this._heroHtml()}
         ${this._hourlyHtml()}
+        <div class="forecast-section">
+          <div class="forecast-title">Prognose &middot; de næste dage</div>
+          ${this._forecastHtml()}
+        </div>
+        ${this._sectionHeading("mdi:radar", "Radar")}
+        ${this._radarHtml()}
         ${this._sectionHeading("mdi:flower-pollen", "Pollen")}
         ${this._pollenHtml()}
         ${this._sectionHeading("mdi:white-balance-sunny", "Sol & UV")}
         ${this._sunHtml()}
-        ${this._sectionHeading("mdi:radar", "Radar")}
-        ${this._radarHtml()}
-      </div>
-      <div class="forecast-section">
-        <div class="forecast-title">Prognose &middot; de næste dage</div>
-        ${this._forecastHtml()}
       </div>
     </ha-card>`;
 
