@@ -1,4 +1,4 @@
-const VERSION = "0.3.2";
+const VERSION = "0.4.0";
 
 const CONDITION_LABEL_DA = {
   "clear-night": "Klar nat",
@@ -432,7 +432,7 @@ class HAWeatherCard extends HTMLElement {
       .hour-prob{font-size:9px;color:var(--accent);font-weight:700;min-height:11px}
       .hour-prob.wet{color:var(--warn)}
       .grid2{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
-      .tile{display:flex;align-items:center;gap:10px;padding:12px 14px;border:1px solid var(--edge);border-radius:16px;cursor:pointer;--tone:var(--accent)}
+      .tile{position:relative;display:flex;align-items:center;gap:10px;padding:12px 14px;border:1px solid color-mix(in srgb,var(--tone) 18%,transparent);border-left:3px solid var(--tone);border-radius:14px;background:linear-gradient(145deg,color-mix(in srgb,var(--tone) 7%,transparent),transparent 60%),var(--ha-card-background,var(--card-background-color));box-shadow:0 4px 12px rgba(0,0,0,.1);cursor:pointer;--tone:var(--accent)}
       .tile ha-icon{--mdc-icon-size:22px;color:var(--tone)}
       .tile img{width:26px;height:26px}
       .tile span{display:block;font-size:10px;color:var(--secondary-text-color);text-transform:uppercase;font-weight:700;letter-spacing:.03em}
@@ -453,7 +453,7 @@ class HAWeatherCard extends HTMLElement {
       .forecast-row{display:flex;gap:8px;overflow-x:auto;padding-bottom:6px;scroll-snap-type:x proximity}
       .forecast-row::-webkit-scrollbar{height:4px}
       .forecast-row::-webkit-scrollbar-thumb{background:var(--edge);border-radius:4px}
-      .fday{flex:0 0 auto;width:96px;display:flex;flex-direction:column;align-items:center;gap:3px;padding:12px 6px;border:1px solid var(--edge);border-radius:14px;cursor:pointer;text-align:center;scroll-snap-align:start}
+      .fday{flex:0 0 auto;width:96px;display:flex;flex-direction:column;align-items:center;gap:3px;padding:12px 6px;border:1px solid color-mix(in srgb,var(--accent) 16%,transparent);border-top:3px solid var(--accent);border-radius:14px;background:linear-gradient(180deg,color-mix(in srgb,var(--accent) 7%,transparent),transparent 60%),var(--ha-card-background,var(--card-background-color));box-shadow:0 4px 12px rgba(0,0,0,.1);cursor:pointer;text-align:center;scroll-snap-align:start}
       .fday-name{font-size:11px;font-weight:800;text-transform:capitalize}
       .fday-temp{font-size:13px;font-weight:800}
       .fday-temp small{color:var(--secondary-text-color);font-weight:700;margin-left:4px}
