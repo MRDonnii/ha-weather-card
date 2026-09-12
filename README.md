@@ -1,5 +1,12 @@
 # HA Weather Card
 
+## Neutral mobile preview
+
+![Neutral mobile preview of ha-weather-card](docs/preview.png)
+
+> Rendered at 390 px mobile width with fictional Home Assistant entities and values. No private dashboard, person, address, camera, or sensor data is included.
+
+
 A single, self-contained Home Assistant Lovelace card that consolidates a full
 weather page into one component:
 
