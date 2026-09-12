@@ -1,4 +1,5 @@
-const VERSION = "0.4.0";
+import "./ha-weather-card-assets.js";
+const VERSION = "0.4.1";
 
 const CONDITION_LABEL_DA = {
   "clear-night": "Klar nat",
@@ -181,7 +182,8 @@ class HAWeatherCard extends HTMLElement {
   _iconPath(condition, isDay) {
     const base = VALID_CONDITIONS.has(condition) && condition !== "exceptional" ? condition : "not-available";
     const night = isDay === false && base !== "clear-night" && base !== "not-available";
-    return `/local/weathericon/${base}${night ? "_night" : ""}.svg`;
+    const key = `${base}${night ? "_night" : ""}`;
+    return window.HAWeatherCardAssets?.weather?.[key] || window.HAWeatherCardAssets?.weather?.["not-available"] || "";
   }
   _isDaytimeNow() {
     return this._s(this._config.sun_entity)?.state === "above_horizon";
@@ -334,11 +336,11 @@ class HAWeatherCard extends HTMLElement {
     const elevationPct = Number.isFinite(elevation) ? Math.max(0, Math.min(100, ((elevation + 10) / 80) * 100)) : 0;
     return `<div class="grid2">
         <div class="tile" data-more="${this._esc(c.sun_entity)}">
-          <img src="/local/weathericon/sunset.svg" width="30" height="30" alt="">
+          <img src="${window.HAWeatherCardAssets?.weather?.sunset || ""}" width="30" height="30" alt="">
           <div><span>Solnedgang</span><b>${this._time(sun?.attributes?.next_setting)}</b></div>
         </div>
         <div class="tile" data-more="${this._esc(c.sun_entity)}">
-          <img src="/local/weathericon/sunrise.svg" width="30" height="30" alt="">
+          <img src="${window.HAWeatherCardAssets?.weather?.sunrise || ""}" width="30" height="30" alt="">
           <div><span>Solopgang</span><b>${this._time(sun?.attributes?.next_rising)}</b></div>
         </div>
         <div class="tile" data-more="${this._esc(c.weather_entity)}" style="--tone:${uvTone.color}">
