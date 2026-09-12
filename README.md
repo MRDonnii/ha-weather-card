@@ -1,5 +1,7 @@
 # HA Weather Card
 
+Alle vejr-, solopgangs- og solnedgangsikoner er indlejret i `ha-weather-card-assets.js`, som HACS downloader sammen med hovedkortet. Ved manuel installation skal begge JavaScript-filer kopieres til samme mappe; en separat `/local/weathericon`-mappe er ikke nødvendig.
+
 ## Neutral mobile preview
 
 ![Neutral mobile preview of ha-weather-card](docs/preview.png)
